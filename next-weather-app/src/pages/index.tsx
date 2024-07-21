@@ -2,7 +2,7 @@ import Head from "next/head";
 import Image from "next/image";
 import { Inter } from "next/font/google";
 import styles from "@/styles/Home.module.css";
-import KakaoMap from "@/component/kakao-map/kakao-map";
+import KakaoMap from "@/component/kakao-map/kakao_map";
 import NowWeather from "@/component/now-weather/now-weather";
 
 const inter = Inter({ subsets: ["latin"] });
