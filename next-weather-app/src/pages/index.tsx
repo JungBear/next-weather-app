@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import styles from "@/styles/Home.module.css";
 import KakaoMap from "@/component/kakao-map/kakao-map";
 import NowWeather from "@/component/now-weather/now-weather";
+import TimeWeather from "@/component/time-weather/time-weather";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,6 +18,7 @@ export default function Home() {
       </div>
       <div>
                 {/* 시간별 예보 */}
+                <TimeWeather />
       </div>
       <div>
 
