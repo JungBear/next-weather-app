@@ -10,9 +10,9 @@ const inter = Inter({ subsets: ["latin"] });
 export default function Home() {
   return (
     <div>
-      <div>
+      <div className={styles.topSection}>
         {/* 위쪽 맵과 현재 날씨 보여주는 영역 */}
-        <KakaoMap/>
+          <KakaoMap />
         <NowWeather/>
       </div>
       <div>
