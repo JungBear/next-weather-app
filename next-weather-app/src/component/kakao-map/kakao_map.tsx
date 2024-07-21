@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Map, MapMarker, CustomOverlayMap } from "react-kakao-maps-sdk";
-
+import styles from './kakao_map.module.css';
 interface Region {
   name: string;
   lat: number;
@@ -82,6 +82,7 @@ const KakaoMap: React.FC = () => {
       level={defaultLevel}
       zoomable={true}
       ref={mapRef}
+      className={styles.map}
     >
         
       {regions.map((region) => (
@@ -101,10 +102,10 @@ const KakaoMap: React.FC = () => {
           </div>
         </CustomOverlayMap>
       ))}
-        <p>
-        <button onClick={() => handleLevel("increase")}>지도레벨 - 1</button>{" "}
-        <button onClick={() => handleLevel("decrease")}>지도레벨 + 1</button>{" "}
-      </p>
+        <p className={styles.zoom_box}>
+          <button className={styles.zoom_btn}  onClick={() => handleLevel("decrease")}>+</button>{" "}
+          <button className={styles.zoom_btn} onClick={() => handleLevel("increase")}>-</button>{" "}
+        </p>
     </Map>
     
   );
