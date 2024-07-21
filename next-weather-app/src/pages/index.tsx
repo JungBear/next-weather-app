@@ -7,6 +7,7 @@ import NowWeather from "@/component/now-weather/now-weather";
 import axios from "axios";
 import { GetServerSideProps } from "next";
 import { parseStringPromise  } from 'xml2js'; // xml2js의 parseStringPromise를 사용
+import TimeWeather from "@/component/time-weather/time-weather";
 
 
 const inter = Inter({ subsets: ["latin"] });
@@ -146,6 +147,7 @@ export default function Home({ weatherData, sunriseSunsetData }: HomeProps) {
       </div>
       <div>
                 {/* 시간별 예보 */}
+                <TimeWeather />
       </div>
       <div>
 
