@@ -1,0 +1,51 @@
+.TimeNavbar{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid lightgray;
+}
+
+.Navbtn button{
+    background-color: transparent;
+    padding: 1rem;
+    border-radius: 0.45rem;
+    margin: 0.2rem;
+}
+
+.ViewList{
+    display: inline-flex;
+    text-align: center;
+}
+
+.ViewList ul{
+    list-style: none;
+    padding: 0;
+}
+
+.ViewList li{
+    padding:0 0.2rem 1rem 0.2rem;
+    border-right: 1px solid lightgray;
+}
+
+.precipitation{
+    background-color: #E9ECED;
+    padding: 0.1rem;
+    border-top: 1px solid lightgray;
+    border-bottom: 1px solid lightgray;
+}
+
+.ViewChart{
+    display: inline-flex;
+    text-align: center;
+}
+
+.ViewChart ul{
+    list-style: none;
+    padding: 0;
+}
+
+.ViewChart li{
+    padding:0 0.2rem 1rem 0.2rem;
+    border-right: 1px solid lightgray;
+
+}
