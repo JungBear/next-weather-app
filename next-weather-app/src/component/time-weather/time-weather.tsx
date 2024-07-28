@@ -8,11 +8,12 @@ export default function TimeWeather(){
     const [ViewTable, setViewTable] = useState(false);
 
     const Today = new Date();
-    const endDate = new Date(Today.getTime() + 2 * 24 * 60 * 60 * 1000); 
-    // 현재 시각으로부터 2일 후의 시각을 계산합니다.
+    const Day = ['일', '월', '화', '수','목','금','토']
+    const formatTodayDay = Day[Today.getDay()];
+    const formatTodayHour = Number(Today.getHours());
+    const endDate = new Date(Today.getTime() + 2 * 24 * 60 * 60 * 1000);
     const timeList = [];
     let currentTime = Today;
-
     
     while (currentTime <= endDate) {
     timeList.push(currentTime.toLocaleString());
@@ -30,6 +31,9 @@ export default function TimeWeather(){
         windDirection: '남서',
         humidity: 70
       };
+
+
+    
 
       // 이렇게 돌려도 정말 괜찮은가??
       function handleWeatherIcon(weather: string){
@@ -76,42 +80,51 @@ export default function TimeWeather(){
             {/* 일반 */}
             {
                 ViewList &&(
-                    //<div>{`${Today}`} 최저 - / 최고 -℃</div>
                     <div className={styles.ViewList}>
-                        <ul>
-                            <li>시각</li>
-                            <li>날씨</li>
-                            <li>기온</li>
-                            <li>체감온도</li>
-                            <li>강수량<br/>(mm)</li>
-                            <li>강수확률</li>
-                            <li>바람<br/>(m/s)</li>
-                            <li>습도</li>
-                            <li>폭염영향</li>
-                        </ul>
+                        <div>
+                            <p>{`${Today.getDate()}일(${formatTodayDay})`}</p>
+                            <p>{`최저 - / 최고 -℃`}</p>
+                        </div>
                         
-                    {
-                        timeList?.map((item, index) =>{
-                            return(
-                                <div className={styles.ViewListDetail}>
-                                    <ul>
-                                        <li>{`${index%24}시`}</li>
-                                        <li>{handleWeatherIcon(weatherData.weather)}</li>
-                                        <li>{`${weatherData.temperature}℃`}</li>
-                                        <li>{`${weatherData.feelsLike}℃`}</li>
-                                        <li className={styles.precipitation}>{weatherData.precipitation}</li>
-                                        <li>{`${weatherData.precipitationProbability}%`}</li>
-                                        <li>
-                                            <span>{hanldeWindIcon()}</span> <br/>
-                                            <span>{weatherData.windSpeed}</span>
-                                        </li>
-                                        <li>{`${weatherData.humidity}%`}</li>
-                                    </ul>
+                        <div className={styles.ViewListDetail}>
+                            <ul>
+                                <li>시각</li>
+                                <li>날씨</li>
+                                <li>기온</li>
+                                <li>체감온도</li>
+                                <li>강수량<br/>(mm)</li>
+                                <li>강수확률</li>
+                                <li>바람<br/>(m/s)</li>
+                                <li>습도</li>
+                                <li>폭염영향</li>
+                            </ul>
+                            
+                        {
+                            timeList?.map((item, index) =>{
+                                return(
+                                    <div>
+                                        <ul>
+                                            <li>{`${(formatTodayHour + index)%24}시`}</li>
+                                            <li>{handleWeatherIcon(weatherData.weather)}</li>
+                                            <li>
+                                                {/* line graph */}
+                                                {`${weatherData.temperature}℃`}
+                                            </li>
+                                            <li>{`${weatherData.feelsLike}℃`}</li>
+                                            <li className={styles.precipitation}>{weatherData.precipitation}</li>
+                                            <li>{`${weatherData.precipitationProbability}%`}</li>
+                                            <li>
+                                                <span>{hanldeWindIcon()}</span> <br/>
+                                                <span>{weatherData.windSpeed}</span>
+                                            </li>
+                                            <li>{`${weatherData.humidity}%`}</li>
+                                        </ul>
 
-                                </div>
-                            )
-                        })
-                    }
+                                    </div>
+                                )
+                            })
+                        }
+                        </div>
                     </div>
                 )
             }
@@ -120,32 +133,36 @@ export default function TimeWeather(){
             {
                 ViewChart&&(
                     <div className={styles.ViewChart}>
-                        <ul>
-                            <li>시각</li>
-                            <li>날씨</li>
-                            <li>기온</li>
-                            <li>강수량<br/>(mm)</li>
-                            <li>강수확률</li>
-                            <li>풍향풍속<br/>(m/s)</li>
-                            <li>습도</li>
-                        </ul>
-                    {
-                        ViewChart === true && timeList?.map((item, index) =>{
-                            return(
-                                <div className={styles.ViewChartDetail}>
-                                    <ul>
-                                        <li>{`${index%24}시`}</li>
-                                        <li>{handleWeatherIcon(weatherData.weather)}</li>
-                                        <li>{`${weatherData.temperature}℃`}</li>
-                                        <li>{weatherData.precipitation}</li>
-                                        <li>{`${weatherData.precipitationProbability}%`}</li>
-                                        <li>{weatherData.windSpeed}</li>
-                                        <li>{`${weatherData.humidity}%`}</li>
-                                    </ul>
-                                </div>    
-                            )
-                        }) 
-                    }
+                        <div>{`${Today.getDate()}일(${formatTodayDay})`} 최저 - / 최고 -℃</div>
+                        <div className={styles.ViewChartDetail}>
+                            <ul>
+                                <li>시각</li>
+                                <li>날씨</li>
+                                <li>기온</li>
+                                <li>강수확률</li>
+                                <li>풍향풍속<br/>(m/s)</li>
+                                <li>습도</li>
+                            </ul>
+                        {
+                            timeList?.map((item, index) =>{
+                                return(
+                                    <div>
+                                        <ul>
+                                            <li>{`${(formatTodayHour + index)%24}시`}</li>
+                                            <li>{handleWeatherIcon(weatherData.weather)}</li>
+                                            <li>{`${weatherData.temperature}℃`}</li>
+                                            <li>{`${weatherData.precipitationProbability}%`}</li>
+                                            <li>
+                                                <span>{hanldeWindIcon()}</span> <br/>
+                                                <span>{weatherData.windSpeed}</span>
+                                            </li>
+                                            <li>{`${weatherData.humidity}%`}</li>
+                                        </ul>
+                                    </div>    
+                                )
+                            }) 
+                        }
+                        </div>
                     </div>
                 )
             }
@@ -153,10 +170,11 @@ export default function TimeWeather(){
             {/* 테이블 형태 */}
             <div>
                 {
-                    ViewTable === true && timeList.map((item,index) =>{
+                    ViewTable && timeList.map((item,index) =>{
                         return(
-                            <div>
-                                <h3>요일</h3>
+                            <div className={styles.ViewTable}>
+                                <h3>{`${Today.getDate()}일(${formatTodayDay})`}</h3>
+                                <p>최저 - ℃ / 최고 - ℃</p>
                                 <ul>
                                     <li>시각</li>
                                     <li>날씨</li>
@@ -168,6 +186,7 @@ export default function TimeWeather(){
                                     <li>폭염영향</li>
                                 </ul>                      
                             </div>
+
                         )
                         
                     })
