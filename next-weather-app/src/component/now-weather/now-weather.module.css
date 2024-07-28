@@ -5,13 +5,18 @@
     min-width: 400px;
     max-width: 500px;
     padding: 20px;
-
+    border: 1px #666 solid;
+    border-left: none;
+    border-radius: 10px;
 
 }
 
 .temperature {
     text-align: center;
     margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .temperature h1 {
@@ -19,9 +24,10 @@
     margin: 0;
 }
 
-.temperature p {
-    margin: 10px 0;
-    color: #666;
+
+.temperature img{
+    width: 30px;
+    height: 30px;
 }
 
 .details {
@@ -75,8 +81,9 @@
 
 .sunTimes {
     display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
+    justify-content: center;
+    gap: 80px;
+    margin-bottom: 40px;
     font-size: 14px;
     color: #666;
 }

@@ -60,12 +60,14 @@ const NowWeather: React.FC<WeatherDisplayProps> = ({ weatherData, sunriseSunsetD
   // 시간을 `시:분` 형식으로 변환
   const formattedSunrise = formatTime(sunriseSunset.sunrise || '');
   const formattedSunset = formatTime(sunriseSunset.sunset || '');
+
+  console.log(weatherData);
   
   return (
     <div className={styles.weatherContainer}>
       <div className={styles.temperature}>
         <h1>{weather.temperature}°C</h1>
-        <p>어제보다 2°C 낮아요</p>
+        <Image src="/img/tempIcon.png" alt="습도" width={30} height={30}/>
       </div>
     
       <div className={styles.details}>
@@ -95,9 +97,11 @@ const NowWeather: React.FC<WeatherDisplayProps> = ({ weatherData, sunriseSunsetD
     </div>
       <div className={styles.sunTimes}>
         <div className={styles.sunriseTime}>
+          <Image src="/img/sunriseIcon.png" alt="일출" width={24} height={24} />
           <p>일출 {formattedSunrise}</p>
         </div>
         <div className={styles.sunsetTime}>
+          <Image src="/img/sunsetIcon.png" alt="일몰" width={24} height={24} />
           <p>일몰 {formattedSunset}</p>
         </div>
       </div>

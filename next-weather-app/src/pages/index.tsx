@@ -84,6 +84,8 @@ export const getServerSideProps: GetServerSideProps = async () => {
   // API 요청에 사용할 날짜와 시간 형식 만들기
   const base_date = `${year}${month}${day}`;
   const base_time = `${hours}${minutes}`;
+  // console.log("날짜 : " + base_date);
+  // console.log("시간 :" + base_time);
 
   const weatherParams = {
     pageNo: 1,
@@ -107,6 +109,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
   try {
     
     const jsonWeatherData = await axios.get<ShortWeatherResponse>(weatherUrl, { params: weatherParams });
+    // console.log(jsonWeatherData.data.response);
     const weatherData = jsonWeatherData.data.response.body.items.item;
 
     // 일출 일몰 데이터 요청
@@ -146,12 +149,12 @@ export default function Home({ weatherData, sunriseSunsetData }: HomeProps) {
         <NowWeather weatherData={weatherData} sunriseSunsetData={sunriseSunsetData}/>
       </div>
       <div>
-                {/* 시간별 예보 */}
-                <TimeWeather />
+        {/* 주간 예보 */}
+        
       </div>
       <div>
-
-        {/* 주간 예보 */}
+                {/* 시간별 예보 */}
+                <TimeWeather />
       </div>
     </div>
   );
