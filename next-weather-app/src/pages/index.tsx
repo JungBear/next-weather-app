@@ -5,6 +5,7 @@ import styles from "@/styles/Home.module.css";
 import KakaoMap from "@/component/kakao-map/kakao_map";
 import NowWeather from "@/component/now-weather/now-weather";
 
+
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
@@ -15,9 +16,7 @@ export default function Home() {
           <KakaoMap />
         <NowWeather/>
       </div>
-      <div>
-                {/* 시간별 예보 */}
-      </div>
+    
       <div>
 
         {/* 주간 예보 */}
