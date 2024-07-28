@@ -1,14 +1,26 @@
+// 의존성 임포트
 import Head from "next/head";
-import Image from "next/image";
+import dynamic from 'next/dynamic';
 import { Inter } from "next/font/google";
-import styles from "@/styles/Home.module.css";
-import KakaoMap from "@/component/kakao-map/kakao_map";
-import NowWeather from "@/component/now-weather/now-weather";
 import axios from "axios";
 import { GetServerSideProps } from "next";
-import { parseStringPromise  } from 'xml2js'; // xml2js의 parseStringPromise를 사용
-import TimeWeather from "@/component/time-weather/time-weather";
 
+// 스타일 임포트
+import styles from "@/styles/Home.module.css";
+
+// 동적 임포트
+const KakaoMap = dynamic(() => import('@/component/kakao-map/kakao_map'), {
+  ssr: false,
+});
+const NowWeather = dynamic(() => import('@/component/now-weather/now-weather'), {
+  ssr: false,
+});
+const TimeWeather = dynamic(() => import('@/component/time-weather/time-weather'), {
+  ssr: false,
+});
+const WeekWeather = dynamic(()=>import('@/component/week-weather/week-weather'),{
+  ssr: false,
+})
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -33,14 +45,13 @@ interface ShortWeatherResponse {
 interface ShortWeatherItem {
   baseDate: string;
   baseTime: string;
-  category: string; // 어떤 종류인지
+  category: string;
   nx: number;
   ny: number;
-  obsrValue: string; // category에 맞는 수치
+  obsrValue: string;
 }
 
- // 일출 일몰에 대한 타입
- interface SunriseSunsetResponse {
+interface SunriseSunsetResponse {
   response: {
     header: {
       resultCode: string;
@@ -64,28 +75,29 @@ interface SunriseSunsetItem {
 
 interface HomeProps {
   weatherData: ShortWeatherItem[];
-  sunriseSunsetData: SunriseSunsetItem[]; // 필요한 타입 정의
+  sunriseSunsetData: SunriseSunsetItem[];
 }
 
 const weatherUrl = 'https://apihub.kma.go.kr/api/typ02/openApi/VilageFcstInfoService_2.0/getUltraSrtNcst';
 const sunriseSunsetUrl = 'http://apis.data.go.kr/B090041/openapi/service/RiseSetInfoService/getAreaRiseSetInfo';
-const weatherAuthKey = 'oRIlKky8TDqSJSpMvPw6Aw'; // 실제 인증키를 여기에 입력하세요
-const sunriseSunsetAuthKey = 'yaffGNRuw48SPoAj/aHF91dtGjGx87nkQopY9gR0iMQXDo8rcfNIfeniedTYxbzSMCAQZgcwO5H/KG2J2nYOLw=='; // 실제 인증키를 여기에 입력하세요
+const weatherAuthKey = 'oRIlKky8TDqSJSpMvPw6Aw';
+const sunriseSunsetAuthKey = 'yaffGNRuw48SPoAj/aHF91dtGjGx87nkQopY9gR0iMQXDo8rcfNIfeniedTYxbzSMCAQZgcwO5H/KG2J2nYOLw==';
+
+const now = new Date();
+const year = now.getFullYear();
+const month = String(now.getMonth() + 1).padStart(2, '0');
+const day = String(now.getDate()).padStart(2, '0');
+const hours = String(now.getHours()).padStart(2, '0');
+const minutes = String(now.getMinutes()).padStart(2, '0');
+const base_date = `${year}${month}${day}`.trim();
+const base_time = `${hours}${minutes}`.trim();
+console.log(base_date);
+console.log(base_time);
+
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  // 현재 날짜와 시간 가져오기
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
+
   
-  // API 요청에 사용할 날짜와 시간 형식 만들기
-  const base_date = `${year}${month}${day}`;
-  const base_time = `${hours}${minutes}`;
-  // console.log("날짜 : " + base_date);
-  // console.log("시간 :" + base_time);
 
   const weatherParams = {
     pageNo: 1,
@@ -104,18 +116,12 @@ export const getServerSideProps: GetServerSideProps = async () => {
     ServiceKey: sunriseSunsetAuthKey
   };
 
-
- 
+  
   try {
-    
     const jsonWeatherData = await axios.get<ShortWeatherResponse>(weatherUrl, { params: weatherParams });
-    // console.log(jsonWeatherData.data.response);
     const weatherData = jsonWeatherData.data.response.body.items.item;
-
-    // 일출 일몰 데이터 요청
-    const sunriseSunsetResponse = await axios.get(sunriseSunsetUrl, { params: sunriseSunsetParams, responseType: 'json' });
-
-
+    
+    const sunriseSunsetResponse = await axios.get(sunriseSunsetUrl, { params: sunriseSunsetParams});
     const item = sunriseSunsetResponse.data.response.body.items.item;
     const sunriseSunsetData = item ? [{
       sunrise: item.sunrise.trim(),
@@ -129,7 +135,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
       }
     };
   } catch (error) {
-    console.error('Error fetching data:', error);
+    console.error('데이터를 가져오는 중 오류 발생:', error);
     return {
       props: {
         weatherData: [],
@@ -139,23 +145,22 @@ export const getServerSideProps: GetServerSideProps = async () => {
   }
 };
 
-
-export default function Home({ weatherData, sunriseSunsetData }: HomeProps) {
+const Home = ({ weatherData, sunriseSunsetData }: HomeProps) => {
   return (
     <div>
       <div className={styles.topSection}>
-        {/* 위쪽 맵과 현재 날씨 보여주는 영역 */}
-          <KakaoMap />
-        <NowWeather weatherData={weatherData} sunriseSunsetData={sunriseSunsetData}/>
+        <KakaoMap />
+        <NowWeather weatherData={weatherData} sunriseSunsetData={sunriseSunsetData} />
       </div>
       <div>
-        {/* 주간 예보 */}
-        
+        {/* 주간일보 */}
+        <WeekWeather baseDate={base_date}/>
       </div>
       <div>
-                {/* 시간별 예보 */}
-                <TimeWeather />
+        <TimeWeather />
       </div>
     </div>
   );
 }
+
+export default Home;
