@@ -11,6 +11,7 @@
     border-radius: 0.45rem;
 }
 
+/* List */
 .ViewList{
     display: flex;
     width: 100%;
@@ -19,28 +20,136 @@
 
 .ViewList ul{
     list-style: none;
+    text-align: center;
     padding: 70px 0px 0px 0px;
 }
 
-.ViewList li{
-    padding:0 0.4rem 1rem 0.2rem;
-    border-right: 1px solid lightgray;
+.ViewListNav li{
+    width: 65px;
+    padding-bottom: 1.5rem;
 }
 
 .ViewListDetail{
     display: inline-flex;
+    position: relative;
     overflow-x: scroll;
     overflow-y: hidden;
 }
 
 .ViewListTimeDetail{
     display: inline-flex;
-    text-align: center;
     width: 100%;
 }
 
-.ViewListDetail ul{
-    padding-top: 70px;
+.ViewListTimeDetail ul{
+    border-left: 1px solid lightgray;
+    padding: 0;
+}
+
+.ViewListTimeDetail li{
+    padding:0 0.4rem 1rem 0.2rem;
+}
+
+
+.TemperChart{
+    position:absolute;
+    top:170px;
+    width: 6000px;
+}
+
+.precipChart{
+    position:absolute;
+    top:370px;
+    width: 6000px;
+}
+/* Chart */
+
+.ViewChart{
+    display: flex;
+    width: 100%;
+    position: relative;
+}
+
+.ViewChart ul{
+    list-style: none;
+    text-align: center;
+    padding: 70px 0px 0px 0px;
+}
+
+.ViewChartNav li{
+    width: 65px;
+    padding-bottom: 1.5rem;
+}
+
+.ViewChartDetail{
+    display: inline-flex;
+    position: relative;
+    overflow: scroll;
+    overflow-y: hidden;
+}
+
+.ViewChartTimeDetail{
+    display: inline-flex;
+    width: 100%;
+}
+
+.ViewChartTimeDetail ul{
+    border-left: 1px solid lightgray;
+    padding: 0;
+}
+
+.ViewChartTimeDetail li{
+    padding:0 0.4rem 1rem 0.2rem;
+}
+
+
+/* Table */
+
+.ViewTable ul{
+    text-align: center;
+    list-style: none;
+    display: flex;
+    padding: 0;
+    margin: 0;
+}
+
+.ViewTable li{
+    width: 50px;
+    padding:0 0.2rem 0rem 0.2rem;
+    border-bottom: 1px solid lightgray;
+}
+
+.ViewTableDetail{
+    display: flex;
+    overflow-x: scroll;
+    overflow-y: hidden;
+}
+
+
+.ViewTableTimeDetail{
+    border-right: 1px solid lightgray; 
+}
+
+.ViewTableTimeDetail p{
+    margin: 0;
+}
+
+.ViewTableNav{
+    display: inline-flex;
+    margin-left: 10px;
+}
+
+.ViewTableNav p{
+    margin-top: 20px;
+    margin-left: 10px;
+}
+
+
+/* 공통 적용 */
+
+
+.AddHeight{
+    height: 120px;
 }
 
 .precipitation{
@@ -50,38 +159,6 @@
     border-bottom: 1px solid lightgray;
 }
 
-.ViewChart{
-    display: flex;
-    width: 100%;
-}
-
-.ViewChartDetail{
-    display: inline-flex;
-    text-align: center;
-    overflow: scroll;
-    overflow-y: hidden;
-}
-
-.ViewChart ul{
-    list-style: none;
-    padding: 0;
-}
-
-.ViewChart li{
-    padding:0 0.2rem 1rem 0.2rem;
-    border-right: 1px solid lightgray;
-}
-
-.ViewTable ul{
-    list-style: none;
-    display: flex;
-    padding: 0;
-}
-
-.ViewTable li{
-    padding:0 0.2rem 1rem 0.2rem;
-    border-bottom: 1px solid lightgray;
-}
 
 
 .floatBox{
@@ -120,4 +197,3 @@
     content: "";
     
 }
-
