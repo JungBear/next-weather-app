@@ -21,7 +21,7 @@ const weatherIcons: { [key: string]: string } = {
 맑음: '/img/sunny.png',
 구름조금:'/img/smallCloud.png',
 구름많음: '/img/cloudy.png',
-흐림: '/img/cloudy.png',
+흐림: '/img/manyCloudy.png',
 비: '/img/rainy.png',
 눈: '/img/snowy.png',
 // 다른 날씨 아이콘도 추가
