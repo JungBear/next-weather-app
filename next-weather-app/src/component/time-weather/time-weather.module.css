@@ -55,7 +55,7 @@
 }
 
 .ViewListTimeDetail li{
-    padding:0 0.4rem 1rem 0.2rem;
+    padding:0 0.4rem 1.3rem 0.2rem;
 }
 
 
@@ -65,9 +65,21 @@
     width: 4300px;
 }
 
+.PCPChart{
+    position:absolute;
+    top:350px;
+    width: 4300px;
+}
+
 .precipChart{
     position:absolute;
-    top:370px;
+    top:470px;
+    width: 4300px;
+}
+
+.REHChart{
+    position:absolute;
+    top:700px;
     width: 4300px;
 }
 /* Chart */

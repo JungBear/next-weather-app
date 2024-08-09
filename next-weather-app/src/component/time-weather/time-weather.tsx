@@ -34,7 +34,6 @@ interface GroupedData {
             PCP : string;
             REH : string;
             SNO : string;
-            
         };
         TMN? : any;
         TMX? : any;
@@ -56,7 +55,7 @@ const TimeWeather: React.FC<TimeWeatherProps> = ({ weatherData }) => {
         
     }, [weatherData]);
     
-
+    // 보기전환
     function handleViewChange(viewState : string) {
         setView(viewState);
     }
@@ -71,13 +70,14 @@ const TimeWeather: React.FC<TimeWeatherProps> = ({ weatherData }) => {
             }
             
             acc[fcstDate][fcstTime][category] = fcstValue;
-            
+
+            // 최저, 최고기온은 따로 저장
             if (fcstTime === '1500') {
                 if (category === 'TMN') {
-                    (acc[fcstDate] as any).TMN = Number(fcstValue); // 타입 캐스팅
+                    (acc[fcstDate] as any).TMN = Number(fcstValue);
                 }
                 if (category === 'TMX') {
-                    (acc[fcstDate] as any).TMX = Number(fcstValue); // 타입 캐스팅
+                    (acc[fcstDate] as any).TMX = Number(fcstValue);
                 }
             }
 
@@ -112,22 +112,51 @@ const TimeWeather: React.FC<TimeWeatherProps> = ({ weatherData }) => {
         const time = now.getHours().toString().padStart(2, '0') + '00';
         return { date, time };
     };
-    
+
+    // TMP(기온 데이터)만
     const filteredTMP = Object.entries(groupedWeatherData)
     .flatMap(([date, times]) =>
         Object.entries(times)
             .sort(([timeA], [timeB]) => timeA.localeCompare(timeB))
             .map(([, data]) => Number(data['TMP']))
     )
-    .filter(value => value);
+    .filter(value => !isNaN(value));
 
+    // POP(강수확률 데이터)만
     const filteredPOP = Object.values(groupedWeatherData).flatMap(times =>
         Object.values(times).map(data => Number(data['POP']))
-        .filter(value => Number(value)));
+        .filter(value => !isNaN(value)));
+
+    // PCP(강수량 데이터)만
+    const filteredPCP = Object.values(groupedWeatherData).flatMap(times =>
+        Object.values(times).map(data => {
+            const value = data['PCP'];
+            if (value === "강수없음") {
+                return 0;
+            } else if (value) {
+                const numericValue = parseFloat(value.replace('mm', ''));
+                return isNaN(numericValue) ? 0 : numericValue; 
+            } else {
+                return 0;
+            }
+        }).filter(value => !isNaN(value))
+    );
+
+    // REH(습도 데이터)만
+    const filteredREH = Object.values(groupedWeatherData).flatMap(times =>
+        Object.values(times).map(data => {
+            const value = data['REH'];
+            if (value === undefined || value === "") {
+                return 0;
+            } else {
+                const numericValue = parseFloat(value);
+                return isNaN(numericValue) ? 0 : numericValue;
+            }
+        }).filter(value => !isNaN(value)) // NaN이 아닌 값만 포함
+    );
 
 
-
-
+    // short요일변환
     function formatTodayDay(datestring: string){
         const year = datestring.substring(0, 4);
         const month = datestring.substring(4, 6);
@@ -142,7 +171,7 @@ const TimeWeather: React.FC<TimeWeatherProps> = ({ weatherData }) => {
 
 
     // chart 
-    const LineOptions: Highcharts.Options = {
+    const TMPChartOptions: Highcharts.Options = {
         chart : { 
             type : 'line',
             height : 180,
@@ -188,12 +217,12 @@ const TimeWeather: React.FC<TimeWeatherProps> = ({ weatherData }) => {
 
     }
 
-    const BarOptions: Highcharts.Options = {
+    const POPChartOptions: Highcharts.Options = {
         chart : { 
             type : 'column',
             height : 100,
             backgroundColor: 'rgba(255, 255, 255, 0)' ,
-            margin: [ 0, 0, 0, 0]
+            margin: [ 0, 0, 0, 0],
         },
         title : { text : "" },
         legend : { enabled : false },
@@ -213,13 +242,15 @@ const TimeWeather: React.FC<TimeWeatherProps> = ({ weatherData }) => {
         },
         xAxis : { 
             labels: { enabled : false },
-            tickWidth : 0,
-            gridLineWidth: 1,
+            gridLineWidth: 0,
+            lineWidth: 3,
+            lineColor: '#0099E1',
+            
         },
         yAxis : { 
             labels: { enabled : false },
-            tickWidth : 0,
             gridLineWidth: 0,
+            lineWidth: 0,
             min: 0,
             max: 100
         },
@@ -230,9 +261,107 @@ const TimeWeather: React.FC<TimeWeatherProps> = ({ weatherData }) => {
             filteredPOP
         }]
     }
+
+    const PCPChartOptions: Highcharts.Options = {
+        chart : { 
+            type : 'column',
+            height : 100,
+            backgroundColor: 'rgba(255, 255, 255, 0)' ,
+            margin: [ 0, 0, 0, 0],
+        },
+        title : { text : "" },
+        legend : { enabled : false },
+        tooltip : { enabled : false },
+        plotOptions : {
+            column : { 
+                dataLabels : { 
+                    enabled : true,
+                    format : '{y}',
+                    style : { fontSize : '16px', fontWeight: 'normal'},
+                    align : 'center'
+                },
+                
+                borderWidth: 1,
+                enableMouseTracking: false,
+            },
+        },
+        xAxis : { 
+            labels: { enabled : false },
+            gridLineWidth: 0,
+            lineWidth: 3,
+            lineColor: '#0099E1',
+            
+        },
+        yAxis : { 
+            labels: { enabled : false },
+            gridLineWidth: 0,
+            lineWidth: 0,
+            min: 0,
+            max: 100
+        },
+        credits: { enabled : false },
+        series: [{
+            type : "column",
+            data: 
+            filteredPCP
+        }]
+    }
     
+    const REHChartOptions: Highcharts.Options = {
+        chart: { 
+            type: 'areaspline',
+            height: 100,
+            backgroundColor: 'rgba(255, 255, 255, 0)',
+            margin: [0, 0, 0, 0]
+        },
+        title: { text: "" },
+        legend: { enabled: false },
+        tooltip: { enabled: false },
+        plotOptions: {
+            areaspline: { 
+                dataLabels: { 
+                    enabled: true,
+                    format: '{y}%',
+                    style: { fontSize: '16px', fontWeight: 'normal' },
+                    align: 'center',
+                    verticalAlign: 'bottom'
+                },
+                fillColor: {
+                    linearGradient: {
+                        x1: 0,
+                        y1: 0,
+                        x2: 0,
+                        y2: 1
+                    },
+                    stops: [
+                        [0, 'rgba(0, 153, 255, 0.5)'], // 시작 색상
+                        [1, 'rgba(0, 153, 255, 0.1)']  // 끝 색상
+                    ]
+                },
+                enableMouseTracking: false,
+                lineWidth: 2
+            },
+        },
+        xAxis: { 
+            labels: { enabled: false },
+            lineWidth: 3,
+            lineColor: '#0099E1',
+        },
+        yAxis: { 
+            labels: { enabled: false },
+            gridLineWidth: 0,
+            title: {
+                text: '',
+            }
+        },
+        credits: { enabled: false },
+        series: [{
+            type: "areaspline",
+            data: filteredREH
+        }]
+    };
 
-
+    // 날씨아이콘 변경
     function handleWeatherIcon(weather: number, time:string){
         const formatTime = Number(time.slice(0, 2));
     
@@ -253,7 +382,7 @@ const TimeWeather: React.FC<TimeWeatherProps> = ({ weatherData }) => {
         }
         
     }
-
+    // 풍향아이콘 변경
     function handleWindIcon(windDirection: number){
         return(
             <img src="https://www.weather.go.kr/w/resources/icon/ic_wd_48x.png" 
@@ -309,7 +438,7 @@ const TimeWeather: React.FC<TimeWeatherProps> = ({ weatherData }) => {
                                 <p>{`최저 ${groupedWeatherData[date].TMN === undefined ? "-" : groupedWeatherData[date].TMN} / 최고 ${groupedWeatherData[date].TMX === undefined ? "-" : groupedWeatherData[date].TMX}℃`}</p>
                             </div>
                             <div className={styles.ViewListTimeDetail}>
-                            {Object.keys(groupedWeatherData[date]).sort().map(time => (
+                            {Object.keys(groupedWeatherData[date]).filter(time => time !== 'TMX' && time !== 'TMN').sort().map(time => (
                                 <div>
                                     <ul>
                                         <li>{`${time.slice(0, 2)}시`}</li>
@@ -335,7 +464,7 @@ const TimeWeather: React.FC<TimeWeatherProps> = ({ weatherData }) => {
                         <div>
                             <HighchartsReact 
                             highcharts={ Highcharts } 
-                            options={ LineOptions }/>
+                            options={ TMPChartOptions }/>
                         </div>
                     </div> 
                     </div>
@@ -350,9 +479,9 @@ const TimeWeather: React.FC<TimeWeatherProps> = ({ weatherData }) => {
                             <li>시각</li>
                             <li>날씨</li>
                             <li className={styles.AddHeight}>기온</li>
-                            <li className={styles.AddHeight}>강수량(mm)</li>
+                            <li className={styles.AddHeight}>강수량</li>
                             <li className={styles.AddHeight}>강수확률</li>
-                            <li className={styles.AddHeight}>풍향풍속<br/>(m/s)</li>
+                            <li className={styles.AddHeight}>풍향풍속</li>
                             <li>습도</li>
                         </ul>
                     </div>
@@ -361,10 +490,10 @@ const TimeWeather: React.FC<TimeWeatherProps> = ({ weatherData }) => {
                         <div>
                             <div className={styles.floatBox}>
                             <p className={styles.floatDate}>{`${date.slice(6, 8)}일(${formatTodayDay(date)})`}</p>
-                                <p>{`최저 - / 최고 -℃`}</p>
+                            <p>{`최저 ${groupedWeatherData[date].TMN === undefined ? "-" : groupedWeatherData[date].TMN} / 최고 ${groupedWeatherData[date].TMX === undefined ? "-" : groupedWeatherData[date].TMX}℃`}</p>
                             </div>
                             <div className={styles.ViewChartTimeDetail}>
-                            {Object.keys(groupedWeatherData[date]).sort().map(time =>(
+                            {Object.keys(groupedWeatherData[date]).filter(time => time !== 'TMX' && time !== 'TMN').sort().map(time =>(
                                 <div>
                                     <ul>
                                         <li>{`${time.slice(0, 2)}시`}</li>
@@ -376,7 +505,7 @@ const TimeWeather: React.FC<TimeWeatherProps> = ({ weatherData }) => {
                                             <span>{handleWindIcon(groupedWeatherData[date][time].VEC)}</span> <br/>
                                             <span>{groupedWeatherData[date][time].WSD}</span>
                                         </li>
-                                        <li>{`${groupedWeatherData[date][time].REH}%`}</li>
+                                        <li></li>
                                     </ul>
                                 </div>
                             ))}   
@@ -387,14 +516,24 @@ const TimeWeather: React.FC<TimeWeatherProps> = ({ weatherData }) => {
                         <div>
                             <HighchartsReact 
                             highcharts={ Highcharts } 
-                            options={ LineOptions }/>
+                            options={ TMPChartOptions }/>
                         </div>
+                    </div>
+                    <div className={styles.PCPChart}>
+                        <HighchartsReact
+                        highcharts={ Highcharts}
+                        options = {PCPChartOptions} />
                     </div>
                     <div className={styles.precipChart}>
                         <HighchartsReact 
                         highcharts={ Highcharts } 
-                        options={ BarOptions }/>
+                        options={ POPChartOptions }/>
                     </div>
+                    <div className={styles.REHChart}>
+                        <HighchartsReact
+                        highcharts={ Highcharts}
+                        options = {REHChartOptions} />
+                    </div>                    
                     </div>
                     <div>
                     </div>
@@ -408,7 +547,7 @@ const TimeWeather: React.FC<TimeWeatherProps> = ({ weatherData }) => {
                             <div className={styles.ViewTableTimeDetail}>
                                 <div className={styles.ViewTableNav}>
                                     <h3>{`${date.slice(6, 8)}일(${formatTodayDay(date)})`}</h3>
-                                    <p>{`최저 - / 최고 -℃`}</p>
+                                    <p>{`최저 ${groupedWeatherData[date].TMN === undefined ? "-" : groupedWeatherData[date].TMN} / 최고 ${groupedWeatherData[date].TMX === undefined ? "-" : groupedWeatherData[date].TMX}℃`}</p>
                                 </div>
                                 <div>
                                     <ul>
@@ -423,7 +562,7 @@ const TimeWeather: React.FC<TimeWeatherProps> = ({ weatherData }) => {
                                     </ul>
                                 </div>
                                 <div>
-                                {Object.keys(groupedWeatherData[date]).sort().map(time => (
+                                {Object.keys(groupedWeatherData[date]).filter(time => time !== 'TMX' && time !== 'TMN').sort().map(time => (
                                     <div>
                                         <ul>
                                             <li>{`${time.slice(0, 2)}시`}</li>
