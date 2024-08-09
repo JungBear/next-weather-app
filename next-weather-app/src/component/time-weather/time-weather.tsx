@@ -1,81 +1,145 @@
 import { useEffect, useState } from "react";
 import styles from './time-weather.module.css'
 import Image from "next/image";
-import Highcharts, { chart, Legend } from 'highcharts';
+import Highcharts from 'highcharts';
 import HighchartsReact from "highcharts-react-official";
 
+interface ShortWeatherItem {
+    baseDate : string;
+    baseTime : string;
+    category : string;
+    fcstDate : string;
+    fcstTime : string;
+    fcstValue : string;
+    nx:number;
+    ny:number;
+}
 
-export default function TimeWeather(){
+interface TimeWeatherProps {
+    weatherData: ShortWeatherItem[];
+}
+
+interface GroupedData {
+    [date: string]: {
+        [time: string]: {
+            TMP : number;
+            UUU : number;
+            VVV : number;
+            VEC : number;
+            WSD : number;
+            SKY : number;
+            PYT : number;
+            POP : string;
+            WAV : number;
+            PCP : string;
+            REH : string;
+            SNO : string;
+            
+        };
+        TMN? : any;
+        TMX? : any;
+    };
+}
+
+
+const TimeWeather: React.FC<TimeWeatherProps> = ({ weatherData }) => {
     const [view, setView] = useState('list');
-    const [timeListByDate, setTimeListByDate] = useState<{ [key: string]: Date[] }>({});
+    const [groupedWeatherData, setGroupedWeatherData] = useState<GroupedData>({});
+
+    useEffect(() => {
+        const groupedData = groupData(weatherData);
+        const { date: currentDate, time: currentTime } = getCurrentDateTime();
+        const filteredData = filterPastData(groupedData, currentDate, currentTime);
+        setGroupedWeatherData(filteredData);
+        
+        console.log(groupedWeatherData);
+        
+    }, [weatherData]);
+    
 
     function handleViewChange(viewState : string) {
         setView(viewState);
     }
-    interface ShortWeatherItem {
-        baseDate: string;
-        baseTime: string;
-        category: string;
-        nx: number;
-        ny: number;
-        obsrValue: string;
-    }
 
-    useEffect(() => {
-        const today = new Date();
-        const startHour = today.getHours();
-        const todayStr = today.toISOString().split('T')[0];
-        const targetDate = new Date(today);
-        targetDate.setDate(today.getDate() + 5); // 5일 후
+    const groupData = (data: any[]): GroupedData => {
+        return data.reduce((acc: GroupedData, item) => {
+            const { fcstDate, fcstTime, category, fcstValue } = item;
 
-        const tempTimeListByDate: { [key: string]: Date[] } = {};
-
-        // 현재 시각 이후부터 오늘 날짜의 23:00까지 시각 추가
-        let currentTime = new Date(today);
-        currentTime.setMinutes(0, 0, 0); // 시각을 정각으로 설정
-
-        while (currentTime.getDate() === today.getDate()) {
-            if (currentTime.getHours() >= startHour) {
-                if (!tempTimeListByDate[todayStr]) {
-                    tempTimeListByDate[todayStr] = [];
+            if (!acc[fcstDate]) acc[fcstDate] = {};
+            if (!acc[fcstDate][fcstTime]) {
+                acc[fcstDate][fcstTime] = { TMP : 0, UUU: 0, VVV: 0, VEC: 0, WSD: 0, SKY: 0, PYT: 0, POP: '', WAV : 0, PCP: '', REH: '', SNO: ''};
+            }
+            
+            acc[fcstDate][fcstTime][category] = fcstValue;
+            
+            if (fcstTime === '1500') {
+                if (category === 'TMN') {
+                    (acc[fcstDate] as any).TMN = Number(fcstValue); // 타입 캐스팅
                 }
-                tempTimeListByDate[todayStr].push(new Date(currentTime));
+                if (category === 'TMX') {
+                    (acc[fcstDate] as any).TMX = Number(fcstValue); // 타입 캐스팅
+                }
             }
-            currentTime.setHours(currentTime.getHours() + 1);
+
+          return acc;
+        }, {} as GroupedData);
+        
+    };
+
+
+    const filterPastData = (data: GroupedData, currentDate: string, currentTime: string): GroupedData => {
+        const filteredData: GroupedData = {};
+
+        for (const [date, times] of Object.entries(data)) {
+            if (date === currentDate) {
+                filteredData[date] = {};
+                for (const [time, values] of Object.entries(times)) {
+                    if (time >= currentTime) {
+                        filteredData[date][time] = values;
+                    }
+                }
+            } else if (date > currentDate) {
+                filteredData[date] = times;
+            }
         }
 
-        currentTime = new Date(today); // reset currentTime to the start of today
-        currentTime.setDate(today.getDate() + 1);
+        return filteredData;
+    };
 
-        // 다음 날짜부터 시각 추가
-        while (currentTime <= targetDate) {
-            const dateStr = currentTime.toISOString().split('T')[0];
-            if (!tempTimeListByDate[dateStr]) {
-                tempTimeListByDate[dateStr] = [];
-            }
-            tempTimeListByDate[dateStr].push(new Date(currentTime));
-            currentTime.setHours(currentTime.getHours() + 1);
-        }
-
-        setTimeListByDate(tempTimeListByDate);
-    }, []);
+    const getCurrentDateTime = () => {
+        const now = new Date();
+        const date = now.toISOString().slice(0, 10).replace(/-/g, ''); 
+        const time = now.getHours().toString().padStart(2, '0') + '00';
+        return { date, time };
+    };
     
-    const formatTodayDay = (date: Date): string => {
-        const Days = ['일', '월', '화', '수','목','금','토']
-        return Days[date.getDay()];
+    const filteredTMP = Object.entries(groupedWeatherData)
+    .flatMap(([date, times]) =>
+        Object.entries(times)
+            .sort(([timeA], [timeB]) => timeA.localeCompare(timeB))
+            .map(([, data]) => Number(data['TMP']))
+    )
+    .filter(value => value);
+
+    const filteredPOP = Object.values(groupedWeatherData).flatMap(times =>
+        Object.values(times).map(data => Number(data['POP']))
+        .filter(value => Number(value)));
+
+
+
+
+    function formatTodayDay(datestring: string){
+        const year = datestring.substring(0, 4);
+        const month = datestring.substring(4, 6);
+        const day = datestring.substring(6, 8);
+        
+        const formattedDateString = `${year}-${month}-${day}`;
+
+        const date = new Date(formattedDateString);
+        const dayofWeek = new Intl.DateTimeFormat('ko-KR', {weekday : 'short'}).format(date);
+        return dayofWeek;
     } 
 
-    // 임시데이터
-    const weatherData = {
-        weather: '맑음',
-        temperature: 25,
-        feelsLike: 27,
-        precipitation: 0.2,
-        precipitationProbability: 30,
-        windSpeed: 5,
-        windDirection: '남서',
-        humidity: 70
-    };
 
     // chart 
     const LineOptions: Highcharts.Options = {
@@ -105,7 +169,7 @@ export default function TimeWeather(){
             labels: { enabled : false },
             tickWidth : 0,
             gridLineWidth: 0,
-            lineWidth : 0
+            lineWidth : 0,
         },
         yAxis : { 
             labels: { enabled : false },
@@ -118,11 +182,8 @@ export default function TimeWeather(){
         credits: { enabled : false },
         series: [{
             type : "line",
-            data: //임시데이터..
-            [31,31,31,31,31,32,31,30,29,28,28,27,27,27,27,26,26,26,26,26,26,27,29,30,31,
-                31,32,32,32,32,32,31,30,29,28,28,28,27,27,27,27,27,26,26,27,28,29,30,31,
-                31,32,32,32,31,31,30,29,28,28,27,27,27,27,26,26,26,26,26,27,27,28,29,30,
-                31,31,32,32,32,31,30,29,28,28,27,27,26]
+            data: 
+            filteredTMP
         }]
 
     }
@@ -165,44 +226,61 @@ export default function TimeWeather(){
         credits: { enabled : false },
         series: [{
             type : "column",
-            data: //임시데이터..
-            [null,null,null,null,null,null,20,20,20,20,0,0,0,0,0,0,0,0,0,0,0,30,30,30,30,
-                30,30,20,0,20,0,0,20,60,20,20,0,0,0,0,0,0,0,0,0,20,20,30,30,30,30,30,30,20,
-                20,20,20,20,0,0,0,0,0,0,0,0,0,20,20,20,20,30,20,20,20,20,30,30,30,20,20,20,20,
-                0,0,0,0,0,0,0,20,20,0]
+            data: 
+            filteredPOP
         }]
     }
     
 
 
-    function handleWeatherIcon(weather: string){
-        const weatherIcons: { [key: string]: string } = {
-            '맑음': '/img/sunny.png',
-            '구름많음': '/img/smallCloud.png',
-            '흐림': '/img/cloudy.png',
-            '비': '/img/rainy.png'
-        };
-        return <Image src={weatherIcons[weather]} alt="" width={55} height={55}/>;
+    function handleWeatherIcon(weather: number, time:string){
+        const formatTime = Number(time.slice(0, 2));
+    
+        if(formatTime > 6 && formatTime < 20){
+            const weatherIcons: { [key: number]: string } = {
+                1: '/img/sunny.png',
+                3: '/img/smallCloud.png',
+                4: '/img/manyCloudy.png'
+            };
+            return <Image src={weatherIcons[weather]} alt="" width={55} height={55}/>;
+        }else{
+            const weatherIcons: { [key: number]: string } = {
+                1: '/img/nightSunny.png',
+                3: '/img/nightCloudy.png',
+                4: '/img/manyCloudy.png'
+            };
+            return <Image src={weatherIcons[weather]} alt="" width={55} height={55}/>;
+        }
+        
     }
 
-    function handleWindIcon(){
-        if(weatherData.windDirection === '남서'){
-            return(
-                <img src="https://www.weather.go.kr/w/resources/icon/ic_wd_48x.png" 
-                style={{transform: 'rotate(135deg)', width: '30px', height: '30px'}}/>
-            )
-        }
+    function handleWindIcon(windDirection: number){
+        return(
+            <img src="https://www.weather.go.kr/w/resources/icon/ic_wd_48x.png" 
+            style={{transform: `rotate(${windDirection}deg)`, width: '30px', height: '30px'}}/>
+        ) 
     }
     
+    function getWindDirection(vec: number){
+        if (vec >= 337.5 || vec < 22.5) return '북';
+        if (vec >= 22.5 && vec < 67.5) return '북동';
+        if (vec >= 67.5 && vec < 112.5) return '동';
+        if (vec >= 112.5 && vec < 157.5) return '남동';
+        if (vec >= 157.5 && vec < 202.5) return '남';
+        if (vec >= 202.5 && vec < 247.5) return '남서';
+        if (vec >= 247.5 && vec < 292.5) return '서';
+        if (vec >= 292.5 && vec < 337.5) return '북서';
+      };
+
 
     return(
         <div>
             <div className={styles.TimeNavbar}>
                 <h3>시간별 예보</h3>
                 <div className={styles.Navbtn}>
-                    <Image src="/img/View_mode_1.png" alt="" onClick={() => handleViewChange('list')} width={30} height={30}/>
-                    <Image src="/img/View_mode_2.png" alt="" onClick={() => handleViewChange('chart')} width={30} height={30}/>
-                    <Image src="/img/View_mode_3.png" alt="" onClick={() => handleViewChange('table')} width={30} height={30}/>
+                    <Image src="/img/View_mode_1.png" alt="" onClick={() => handleViewChange('list')} width={30} height={30} className={view === 'list' ? styles.SelectedImg : ''}/>
+                    <Image src="/img/View_mode_2.png" alt="" onClick={() => handleViewChange('chart')} width={30} height={30} className={view === 'chart' ? styles.SelectedImg : ''}/>
+                    <Image src="/img/View_mode_3.png" alt="" onClick={() => handleViewChange('table')} width={30} height={30} className={view === 'table' ? styles.SelectedImg : ''}/>
                 </div>    
             </div>
             
@@ -213,7 +291,7 @@ export default function TimeWeather(){
                         <ul>
                             <li>시각</li>
                             <li>날씨</li>
-                            <li className={styles.temperature}>기온</li>
+                            <li className={styles.AddHeight}>기온</li>
                             <li>체감온도</li>
                             <li className={styles.paddingNone}>강수량(mm)</li>
                             <li>강수확률</li>
@@ -224,28 +302,28 @@ export default function TimeWeather(){
                     </div>
                                                
                     <div className={styles.ViewListDetail}>                        
-                    {Object.keys(timeListByDate).map(date =>(
+                    {Object.keys(groupedWeatherData).map(date =>(
                         <div>
                             <div className={styles.floatBox}>
-                                <p className={styles.floatDate}>{`${new Date(date).getDate()}일(${formatTodayDay(new Date(date))})`}</p>
-                                <p>{`최저 - / 최고 -℃`}</p>
+                                <p className={styles.floatDate}>{`${date.slice(6, 8)}일(${formatTodayDay(date)})`}</p>
+                                <p>{`최저 ${groupedWeatherData[date].TMN === undefined ? "-" : groupedWeatherData[date].TMN} / 최고 ${groupedWeatherData[date].TMX === undefined ? "-" : groupedWeatherData[date].TMX}℃`}</p>
                             </div>
                             <div className={styles.ViewListTimeDetail}>
-                            {timeListByDate[date].map((item, index) => (
+                            {Object.keys(groupedWeatherData[date]).sort().map(time => (
                                 <div>
                                     <ul>
-                                        <li>{`${item.getHours()}시`}</li>
-                                        <li>{handleWeatherIcon(weatherData?.weather)}</li>
+                                        <li>{`${time.slice(0, 2)}시`}</li>
+                                        <li>{handleWeatherIcon(groupedWeatherData[date][time].SKY, time)}</li>
                                         <li className={styles.AddHeight}>
                                         </li>
-                                        <li>{`${weatherData.feelsLike}℃`}</li>
-                                        <li className={styles.precipitation}>{weatherData.precipitation}</li>
-                                        <li>{`${weatherData.precipitationProbability}%`}</li>
+                                        <li>{`${groupedWeatherData[date][time].TMP}℃`}</li>
+                                        <li className={styles.precipitation}>{groupedWeatherData[date][time].PCP === "강수없음" ? "-" : groupedWeatherData[date][time].PCP}</li>
+                                        <li>{`${groupedWeatherData[date][time].POP}%`}</li>
                                         <li>
-                                            <span>{handleWindIcon()}</span> <br/>
-                                            <span>{weatherData.windSpeed}</span>
+                                            <span>{handleWindIcon(groupedWeatherData[date][time].VEC)}</span> <br/>
+                                            <span>{groupedWeatherData[date][time].WSD}</span>
                                         </li>
-                                        <li>{`${weatherData.humidity}%`}</li>
+                                        <li>{`${groupedWeatherData[date][time].REH}%`}</li>
                                     </ul>
                                 </div>
                             ))}
@@ -279,26 +357,26 @@ export default function TimeWeather(){
                         </ul>
                     </div>
                     <div className={styles.ViewChartDetail}>
-                    { Object.keys(timeListByDate).map(date => (
+                    { Object.keys(groupedWeatherData).map(date => (
                         <div>
                             <div className={styles.floatBox}>
-                                <p className={styles.floatDate}>{`${new Date(date).getDate()}일(${formatTodayDay(new Date(date))})`}</p>
+                            <p className={styles.floatDate}>{`${date.slice(6, 8)}일(${formatTodayDay(date)})`}</p>
                                 <p>{`최저 - / 최고 -℃`}</p>
                             </div>
                             <div className={styles.ViewChartTimeDetail}>
-                            {timeListByDate[date]?.map((item, index) =>(
+                            {Object.keys(groupedWeatherData[date]).sort().map(time =>(
                                 <div>
                                     <ul>
-                                        <li>{`${item.getHours()}시`}</li>
-                                        <li>{handleWeatherIcon(weatherData?.weather)}</li>
+                                        <li>{`${time.slice(0, 2)}시`}</li>
+                                        <li>{handleWeatherIcon(groupedWeatherData[date][time].SKY, time)}</li>
                                         <li className={styles.AddHeight}></li>
                                         <li className={styles.AddHeight}></li>
                                         <li className={styles.AddHeight}></li>
                                         <li>
-                                            <span>{handleWindIcon()}</span> <br/>
-                                            <span>{weatherData.windSpeed}</span>
+                                            <span>{handleWindIcon(groupedWeatherData[date][time].VEC)}</span> <br/>
+                                            <span>{groupedWeatherData[date][time].WSD}</span>
                                         </li>
-                                        <li>{`${weatherData.humidity}%`}</li>
+                                        <li>{`${groupedWeatherData[date][time].REH}%`}</li>
                                     </ul>
                                 </div>
                             ))}   
@@ -326,10 +404,10 @@ export default function TimeWeather(){
             {view === 'table' && (
                 <div className={styles.ViewTable}>
                     <div className={styles.ViewTableDetail}>
-                        {Object.keys(timeListByDate).map(date => (
+                        {Object.keys(groupedWeatherData).map(date => (
                             <div className={styles.ViewTableTimeDetail}>
                                 <div className={styles.ViewTableNav}>
-                                    <h3>{`${new Date(date).getDate()}일(${formatTodayDay(new Date(date))})`}</h3>
+                                    <h3>{`${date.slice(6, 8)}일(${formatTodayDay(date)})`}</h3>
                                     <p>{`최저 - / 최고 -℃`}</p>
                                 </div>
                                 <div>
@@ -345,30 +423,29 @@ export default function TimeWeather(){
                                     </ul>
                                 </div>
                                 <div>
-                                {timeListByDate[date]?.map((item, index) => (
+                                {Object.keys(groupedWeatherData[date]).sort().map(time => (
                                     <div>
                                         <ul>
-                                            <li>{`${item.getHours()}시`}</li>
+                                            <li>{`${time.slice(0, 2)}시`}</li>
                                             <li>
                                                 <div>
-                                                    <div>{handleWeatherIcon(weatherData?.weather)}</div>
-                                                    <p>{weatherData?.weather}</p>
+                                                    <div>{handleWeatherIcon(groupedWeatherData[date][time].SKY, time)}</div>
+                                                    <p>{groupedWeatherData[date][time].SKY == 1 ? "맑음" : groupedWeatherData[date][time].SKY == 3 ? "구름많음" : "흐림"}</p>
                                                 </div>
                                             </li>
                                             <li>
                                                 <span>
-                                                    <p>{`${weatherData.temperature}℃`}</p>
-                                                    <p>{`(${weatherData.feelsLike}℃)`}</p>
+                                                    <p>{`${groupedWeatherData[date][time].TMP}℃`}</p>
+                                                    <p>{`(${groupedWeatherData[date][time].TMP}℃)`}</p>
                                                 </span>
                                             </li>
-                                            <li>{`${weatherData.feelsLike}℃`}</li>
-                                            <li>{weatherData.precipitation}</li>
-                                            <li>{`${weatherData.precipitationProbability}%`}</li>
+                                            <li>{groupedWeatherData[date][time].PCP === "강수없음" ? "-" : groupedWeatherData[date][time].PCP}</li>
+                                            <li>{`${groupedWeatherData[date][time].POP}%`}</li>
                                             <li>
-                                                {handleWindIcon()} <br />
-                                                <span>{weatherData.windSpeed}</span>
+                                                {`${getWindDirection(groupedWeatherData[date][time].VEC)}풍`} <br />
+                                                <span>{groupedWeatherData[date][time].WSD}</span>
                                             </li>
-                                            <li>{`${weatherData.humidity}%`}</li>
+                                            <li>{`${groupedWeatherData[date][time].REH}%`}</li>
                                         </ul>
                                     </div>
                                 ))}  
@@ -381,3 +458,5 @@ export default function TimeWeather(){
         </div>
     );
 }
+
+export default TimeWeather;
