@@ -1,26 +1,169 @@
+// 의존성 임포트
 import Head from "next/head";
-import Image from "next/image";
+import dynamic from 'next/dynamic';
 import { Inter } from "next/font/google";
+import axios from "axios";
+import { GetServerSideProps } from "next";
+
+// 스타일 임포트
 import styles from "@/styles/Home.module.css";
-import KakaoMap from "@/component/kakao-map/kakao_map";
-import NowWeather from "@/component/now-weather/now-weather";
+
+// 동적 임포트
+const KakaoMap = dynamic(() => import('@/component/kakao-map/kakao_map'), {
+  ssr: false,
+});
+const NowWeather = dynamic(() => import('@/component/now-weather/now-weather'), {
+  ssr: false,
+});
+const TimeWeather = dynamic(() => import('@/component/time-weather/time-weather'), {
+  ssr: false,
+});
+const WeekWeather = dynamic(()=>import('@/component/week-weather/week-weather'),{
+  ssr: false,
+})
 
 
 const inter = Inter({ subsets: ["latin"] });
 
-export default function Home() {
+interface ShortWeatherResponse {
+  response: {
+    header: {
+      resultCode: string;
+      resultMsg: string;
+    };
+    body: {
+      dataType: string;
+      items: {
+        item: ShortWeatherItem[];
+      };
+      pageNo: number;
+      numOfRows: number;
+      totalCount: number;
+    };
+  };
+}
+
+interface ShortWeatherItem {
+  baseDate: string;
+  baseTime: string;
+  category: string;
+  nx: number;
+  ny: number;
+  obsrValue: string;
+}
+
+interface SunriseSunsetResponse {
+  response: {
+    header: {
+      resultCode: string;
+      resultMsg: string;
+    };
+    body: {
+      items: {
+        item: SunriseSunsetItem[];
+      };
+      numOfRows: number;
+      pageNo: number;
+      totalCount: number;
+    };
+  };
+}
+
+interface SunriseSunsetItem {
+  sunrise: string;
+  sunset: string;
+}
+
+interface HomeProps {
+  weatherData: ShortWeatherItem[];
+  sunriseSunsetData: SunriseSunsetItem[];
+}
+
+const weatherUrl = 'https://apihub.kma.go.kr/api/typ02/openApi/VilageFcstInfoService_2.0/getUltraSrtNcst';
+const sunriseSunsetUrl = 'http://apis.data.go.kr/B090041/openapi/service/RiseSetInfoService/getAreaRiseSetInfo';
+const weatherAuthKey = 'oRIlKky8TDqSJSpMvPw6Aw';
+const sunriseSunsetAuthKey = 'yaffGNRuw48SPoAj/aHF91dtGjGx87nkQopY9gR0iMQXDo8rcfNIfeniedTYxbzSMCAQZgcwO5H/KG2J2nYOLw==';
+
+const now = new Date();
+const year = now.getFullYear();
+const month = String(now.getMonth() + 1).padStart(2, '0');
+const day = String(now.getDate()).padStart(2, '0');
+const hours = String(now.getHours()).padStart(2, '0');
+const minutes = String(now.getMinutes()).padStart(2, '0');
+const base_date = `${year}${month}${day}`.trim();
+const base_time = `${hours}${minutes}`.trim();
+console.log(base_date);
+console.log(base_time);
+
+
+export const getServerSideProps: GetServerSideProps = async () => {
+
+  
+
+  const weatherParams = {
+    pageNo: 1,
+    numOfRows: 1000,
+    dataType: 'json',
+    base_date: base_date,
+    base_time: base_time,
+    nx: 55,
+    ny: 127,
+    authKey: weatherAuthKey
+  };
+
+  const sunriseSunsetParams = {
+    location: '서울',
+    locdate: base_date,
+    ServiceKey: sunriseSunsetAuthKey
+  };
+
+  
+  try {
+    const jsonWeatherData = await axios.get<ShortWeatherResponse>(weatherUrl, { params: weatherParams });
+    const weatherData = jsonWeatherData.data.response.body.items.item;
+    
+    const sunriseSunsetResponse = await axios.get(sunriseSunsetUrl, { params: sunriseSunsetParams});
+    const item = sunriseSunsetResponse.data.response.body.items.item;
+    const sunriseSunsetData = item ? [{
+      sunrise: item.sunrise.trim(),
+      sunset: item.sunset.trim()
+    }] : [];
+
+    return {
+      props: {
+        weatherData,
+        sunriseSunsetData: sunriseSunsetData
+      }
+    };
+  } catch (error) {
+    console.error('데이터를 가져오는 중 오류 발생:', error);
+    return {
+      props: {
+        weatherData: [],
+        sunriseSunsetData: []
+      }
+    };
+  }
+};
+
+const Home = ({ weatherData, sunriseSunsetData }: HomeProps) => {
   return (
     <div>
       <div className={styles.topSection}>
-        {/* 위쪽 맵과 현재 날씨 보여주는 영역 */}
-          <KakaoMap />
-        <NowWeather/>
+        <KakaoMap />
+        <NowWeather weatherData={weatherData} sunriseSunsetData={sunriseSunsetData} />
       </div>
-    
-      <div>
 
-        {/* 주간 예보 */}
+      <div>
+        {/* 주간일보 */}
+        <WeekWeather baseDate={base_date}/>
+      </div>
+
+      <div>
+        <TimeWeather />
       </div>
     </div>
   );
 }
+
+export default Home;

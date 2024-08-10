@@ -228,6 +228,7 @@ const KakaoMap: React.FC = () => {
   const visibleRegions = getVisibleRegions();
 
   return (
+    
     <Map
       center={center}
       style={{ width: "50%", height: "600px" }}
