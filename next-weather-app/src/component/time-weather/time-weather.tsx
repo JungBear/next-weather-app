@@ -102,7 +102,6 @@ const TimeWeather: React.FC<TimeWeatherProps> = ({ weatherData }) => {
                 filteredData[date] = times;
             }
         }
-
         return filteredData;
     };
 
