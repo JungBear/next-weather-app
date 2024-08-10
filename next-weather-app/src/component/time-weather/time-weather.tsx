@@ -145,15 +145,12 @@ const TimeWeather: React.FC<TimeWeatherProps> = ({ weatherData }) => {
     const filteredREH = Object.values(groupedWeatherData).flatMap(times =>
         Object.values(times).map(data => {
             const value = data['REH'];
-            if (value === undefined || value === "") {
-                return 0;
-            } else {
-                const numericValue = parseFloat(value);
-                return isNaN(numericValue) ? 0 : numericValue;
-            }
+            const numericValue = parseFloat(value);
+            return numericValue;
+            
         }).filter(value => !isNaN(value)) // NaN이 아닌 값만 포함
     );
-
+    console.log(filteredREH);
 
     // short요일변환
     function formatTodayDay(datestring: string){
