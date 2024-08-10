@@ -13,17 +13,23 @@
 }
 
 .ViewList{
+    width: 100%;
+    overflow-y: scroll;
+}
+
+.ViewListDetail{
     display: inline-flex;
     text-align: center;
 }
 
-.ViewList ul{
+.ViewListDetail ul{
     list-style: none;
     padding: 0;
 }
 
-.ViewList li{
-    padding:0 0.2rem 1rem 0.2rem;
+.ViewListDetail li{
+    
+    padding:0 0.4rem 1rem 0.2rem;
     border-right: 1px solid lightgray;
 }
 
@@ -35,16 +41,21 @@
 }
 
 .ViewChart{
+    width: 100%;
+    overflow: scroll;
+}
+
+.ViewChartDetail{
     display: inline-flex;
     text-align: center;
 }
 
-.ViewChart ul{
+.ViewChartDetail ul{
     list-style: none;
     padding: 0;
 }
 
-.ViewChart li{
+.ViewChartDetail li{
     padding:0 0.2rem 1rem 0.2rem;
     border-right: 1px solid lightgray;
 
